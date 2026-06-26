@@ -1,0 +1,305 @@
+Name: Gui Moise Pascal Melchisedek
+ID: 55082028
+Cohort: A
+
+-----CREATE DATA BASE------
+
+MariaDB [(none)]> CREATE DATABASE pascal;
+Query OK, 1 row affected (0.001 sec)
+
+MariaDB [(none)]> USE pascal db;
+Database changed
+
+-----DEPARTMENT TABLE------
+
+MariaDB [pascal]> CREATE TABLE Department (
+    ->     deptNo VARCHAR(10) NOT NULL,
+    ->     deptName VARCHAR(50) NOT NULL,
+    ->     mgrEmpNo VARCHAR(10),
+    ->     PRIMARY KEY (deptNo)
+    -> );
+Query OK, 0 rows affected (0.007 sec)
+
+MariaDB [pascal]> INSERT INTO Department (deptNo, deptName, mgrEmpNo) VALUES
+    -> ('D01', 'Development', NULL),
+    -> ('D02', 'Research & Analysis', NULL),
+    -> ('D03', 'Quality Assurance', NULL),
+    -> ('D04', 'Human Resources', NULL),
+    -> ('D05', 'Tech Support', NULL);
+
+MariaDB [pascal]> SELECT *FROM department;
++--------+---------------------+----------+
+| deptNo | deptName            | mgrEmpNo |
++--------+---------------------+----------+
+| D01    | Development         | E1       |
+| D02    | Research & Analysis | E3       |
+| D03    | Quality Assurance   | E5       |
+| D04    | Human Resources     | NULL     |
+| D05    | Tech Support        | NULL     |
++--------+---------------------+----------+
+5 rows in set (0.004 sec)
+
+-----EMPLOYEE TABLE-------
+
+MariaDB [pascal]> CREATE TABLE Employee(
+    -> empNo VARCHAR(10) NOT NULL,
+    -> fName VARCHAR(30) NOT NULL,
+    -> lName VARCHAR(30) NOT NULL,
+    -> address VARCHAR(100),
+    -> DOB Date,
+    -> sex CHAR(1),
+    -> position VARCHAR(30),
+    -> deptNo VARCHAR(10),
+    -> PRIMARY KEY(empNo),
+    -> FOREIGN KEY(deptNo) REFERENCES department(DeptNo),
+    -> CONSTRAINT chk_sex CHECK (sex IN ('M', 'F')),
+    -> CONSTRAINT chk_position CHECK (position IN ('Manager', 'Team Leader', 'Analyst', 'Software Engineer'))
+    -> );
+Query OK, 0 rows affected (0.004 sec)
+
+MariaDB [pascal]> INSERT INTO Employee (empNo, fName, lName, address, DOB, sex, position, deptNo) VALUES
+    -> ('E1', 'Alice', 'Smith', '123 Maple St', '1985-04-12', 'F', 'Manager', 'D01'),
+    -> ('E2', 'Bob', 'Jones', '456 Oak Ave', '1990-08-23', 'M', 'Analyst', 'D01'),
+    -> ('E3', 'Carol', 'Davis', '789 Pine Rd', '1988-11-02', 'F', 'Manager', 'D02'),
+    -> ('E4', 'David', 'Clark', '101 Cedar Ln', '1993-01-15', 'M', 'Analyst', 'D02'),
+    -> ('E5', 'Eve', 'Taylor', '202 Birch Dr', '1995-06-30', 'F', 'Manager', 'D03');
+Query OK, 5 rows affected (0.028 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [pascal]> SELECT *FROM Employee;
++-------+-------+--------+--------------+------------+------+----------+--------+
+| empNo | fName | lName  | address      | DOB        | sex  | position | deptNo |
++-------+-------+--------+--------------+------------+------+----------+--------+
+| E1    | Alice | Smith  | 123 Maple St | 1985-04-12 | F    | Manager  | D01    |
+| E2    | Bob   | Jones  | 456 Oak Ave  | 1990-08-23 | M    | Analyst  | D01    |
+| E3    | Carol | Davis  | 789 Pine Rd  | 1988-11-02 | F    | Manager  | D02    |
+| E4    | David | Clark  | 101 Cedar Ln | 1993-01-15 | M    | Analyst  | D02    |
+| E5    | Eve   | Taylor | 202 Birch Dr | 1995-06-30 | F    | Manager  | D03    |
++-------+-------+--------+--------------+------------+------+----------+--------+
+5 rows in set (0.001 sec)
+
+-----ADDING COLUMN-------
+
+MariaDB [pascal]> ALTER TABLE Department ADD FOREIGN KEY (mgrEmpNo) REFERENCE Employee(EmpNo);
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'REFERENCE Employee(EmpNo)' at line 1
+MariaDB [pascal]> ALTER TABLE Department ADD FOREIGN KEY (mgrEmpNo) REFERENCES Employee(empNo);
+Query OK, 0 rows affected (0.014 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+-----PROJECT TABLE-------
+
+MariaDB [pascal]> CREATE TABLE Project (
+    ->     projNo VARCHAR(10) NOT NULL,
+    ->     projName VARCHAR(50) NOT NULL,
+    ->     deptNo VARCHAR(10),
+    ->     PRIMARY KEY (projNo),
+    ->     FOREIGN KEY (deptNo) REFERENCES Department(deptNo)
+    -> );
+Query OK, 0 rows affected (0.009 sec)
+
+MariaDB [pascal]>  INSERT INTO Project (projNo, projName, deptNo) VALUES
+    -> ('P01', 'SCCS', 'D01'),
+    -> ('P02', 'Data Analytics Platform', 'D02'),
+    -> ('P03', 'Automated Testing Suite', 'D03'),
+    -> ('P04', 'Cloud Migration Phase 1', 'D01'),
+    -> ('P05', 'Security Audit System', 'D02');
+Query OK, 5 rows affected (0.029 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [pascal]> select *FROM Project;
++--------+-------------------------+--------+
+| projNo | projName                | deptNo |
++--------+-------------------------+--------+
+| P01    | SCCS                    | D01    |
+| P02    | Data Analytics Platform | D02    |
+| P03    | Automated Testing Suite | D03    |
+| P04    | Cloud Migration Phase 1 | D01    |
+| P05    | Security Audit System   | D02    |
++--------+-------------------------+--------+
+5 rows in set (0.001 sec)
+
+-----WORKSON TABLE-------
+
+MariaDB [pascal]> CREATE TABLE WorksOn (
+    ->     empNo VARCHAR(10) NOT NULL,
+    ->     projNo VARCHAR(10) NOT NULL,
+    ->     dateWorked DATE NOT NULL,
+    ->     hoursWorked INT,
+    -> PRIMARY KEY (empNo, projNo, dateWorked),
+    ->     FOREIGN KEY (empNo) REFERENCES Employee(empNo),
+    ->     FOREIGN KEY (projNo) REFERENCES Project(projNo),
+    -> CONSTRAINT chk_hoursWorked CHECK (hoursWorked >= 0 AND hoursWorked <= 40)
+    -> );
+Query OK, 0 rows affected (0.009 sec)
+
+MariaDB [pascal]> INSERT INTO WorksOn (empNo, projNo, dateWorked, hoursWorked) VALUES
+    -> ('E1', 'P01', '2026-06-01', 12),
+    -> ('E2', 'P01', '2026-06-05', 38),
+    -> ('E3', 'P02', '2026-06-12', 15),
+    -> ('E4', 'P02', '2026-06-18', 40),
+    -> ('E5', 'P03', '2026-06-24', 30);
+Query OK, 5 rows affected (0.027 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [pascal]> select *from workson;
++-------+--------+------------+-------------+
+| empNo | projNo | dateWorked | hoursWorked |
++-------+--------+------------+-------------+
+| E1    | P01    | 2026-06-01 |          12 |
+| E2    | P01    | 2026-06-05 |          38 |
+| E3    | P02    | 2026-06-12 |          15 |
+| E4    | P02    | 2026-06-18 |          40 |
+| E5    | P03    | 2026-06-24 |          30 |
++-------+--------+------------+-------------+
+5 rows in set (0.001 sec)
+
+--------FEMALEMANAGEDPROJECT VIEW--------
+
+MariaDB [pascal]> CREATE VIEW FemaleManagedProjects AS
+    -> SELECT p.projNo, p.projName, p.deptNo
+    -> FROM Project p
+    -> JOIN Department d ON p.deptNo = d.deptNo
+    -> JOIN Employee e ON d.mgrEmpNo = e.empNo
+    -> WHERE e.sex = 'F'
+    -> ORDER BY p.projNo;
+Query OK, 0 rows affected (0.008 sec)
+
+MariaDB [pascal]> SELECT * FROM FemaleManagedProjects;
++--------+-------------------------+--------+
+| projNo | projName                | deptNo |
++--------+-------------------------+--------+
+| P01    | SCCS                    | D01    |
+| P02    | Data Analytics Platform | D02    |
+| P03    | Automated Testing Suite | D03    |
+| P04    | Cloud Migration Phase 1 | D01    |
+| P05    | Security Audit System   | D02    |
++--------+-------------------------+--------+
+5 rows in set (0.009 sec)
+
+
+--------EMPLOYEEPREOJECTHOURS VIEW---------
+
+MariaDB [pascal]> CREATE VIEW EmployeeProjectHours AS
+    -> SELECT e.empNo, e.fName, e.lName, p.projName, w.hoursWorked
+    -> FROM Employee e
+    -> JOIN WorksOn w ON e.empNo = w.empNo
+    -> JOIN Project p ON w.projNo = p.projNo;
+Query OK, 0 rows affected (0.030 sec)
+
+MariaDB [pascal]> SELECT * FROM EmployeeProjectHours;
++-------+-------+--------+-------------------------+-------------+
+| empNo | fName | lName  | projName                | hoursWorked |
++-------+-------+--------+-------------------------+-------------+
+| E1    | Alice | Smith  | SCCS                    |          12 |
+| E2    | Bob   | Jones  | SCCS                    |          38 |
+| E3    | Carol | Davis  | Data Analytics Platform |          15 |
+| E4    | David | Clark  | Data Analytics Platform |          40 |
+| E5    | Eve   | Taylor | Automated Testing Suite |          30 |
++-------+-------+--------+-------------------------+-------------+
+5 rows in set (0.006 sec)
+
+------PROJECT (empPROJECT) 7.27--------
+
+MariaDB [pascal]> CREATE VIEW EmpProject (empNo, projNo, totalHours) AS
+    -> SELECT
+    ->     w.empNo,
+    ->     w.projNo,
+    ->     SUM(w.hoursWorked)
+    -> FROM Employee e, Project p, WorksOn w
+    -> WHERE e.empNo = w.empNo
+    ->   AND p.projNo = w.projNo
+    -> GROUP BY w.empNo, w.projNo;
+Query OK, 0 rows affected (0.007 sec)
+
+MariaDB [pascal]> select * from empproject;
++-------+--------+------------+
+| empNo | projNo | totalHours |
++-------+--------+------------+
+| E1    | P01    |         12 |
+| E2    | P01    |         38 |
+| E3    | P02    |         15 |
+| E4    | P02    |         40 |
+| E5    | P03    |         30 |
++-------+--------+------------+
+5 rows in set (0.009 sec)
+
+
+A). SELECT *FROM EmpProject;
+this means show everything inside the virtual table, this gives us a clean list of every employee, every project they perform and total hours they utilize in a project.
+
+MariaDB [pascal]> select *from EmpProject;
++-------+--------+------------+
+| empNo | projNo | totalHours |
++-------+--------+------------+
+| E1    | P01    |         12 |
+| E2    | P01    |         38 |
+| E3    | P02    |         15 |
+| E4    | P02    |         40 |
+| E5    | P03    |         30 |
++-------+--------+------------+
+5 rows in set (0.002 sec)
+
+B). SELECT projNo FROM empProject WHERE projNo = "SCCS';
+THIS QUERY, it first throw away the rows that aren't about the SCCS peoject. it works by looking for the finished calculations then applies the filter (where), and output the required information only
+
++-------+--------+------------+
+| empNo | projNo | totalHours |
++-------+--------+------------+
+| E1    | P01    |         12 |
+| E2    | P01    |         38 |
++-------+--------+------------+
+2 rows in set (0.001 sec)
+
+C). SELECT COUNT(projNo) FROM EmpProject WHERE empNo = 'E1';
+this query, says that find employee E1, look how many project he has performed in a row and count them.
+
+MariaDB [pascal]> SELECT COUNT(projNo)
+    -> FROM empProject
+    -> WHERE empNo = 'E1';
++---------------+
+| COUNT(projNo) |
++---------------+
+|             1 |
++---------------+
+1 row in set (0.002 sec)
+
+
+D). SELECT empNo, toatlHours, FROM empProject GROUP BY empNo,
+this query in incorrect because totalhours is neither included in GROUP BY clause nor aggregated using an aggregae like SUM(),COUNT() OR AVG(), SO it should be aggregated to bring a clear output.
+
+MariaDB [pascal]> SELECT empNo, totalHours
+    -> FROM empProject
+    -> GROUP BY empNo;
++-------+------------+
+| empNo | totalHours |
++-------+------------+
+| E1    |         12 |
+| E2    |         38 |
+| E3    |         15 |
+| E4    |         40 |
+| E5    |         30 |
++-------+------------+
+5 rows in set (0.005 sec)
+
+MariaDB [pascal]>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
